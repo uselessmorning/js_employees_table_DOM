@@ -5,6 +5,8 @@ const pushNotification = (posTop, posRight, title, description, type) => {
   // write code here
   const div = document.createElement('div');
 
+  div.setAttribute('data-qa', 'notification');
+
   div.className = `notification ${type}`;
   div.style.top = posTop + 'px';
   div.style.right = posRight + 'px';
@@ -43,11 +45,18 @@ thead.addEventListener('click', (e) => {
   const columnIndex = th.cellIndex;
   const rows = Array.from(tbody.rows);
 
+  if (columnIndex === currentColumn) {
+    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortDirection = 'asc';
+    currentColumn = columnIndex;
+  }
+
   const direction = sortDirection === 'desc' ? -1 : 1;
 
   rows.sort((a, b) => {
-    const aText = a.cells[columnIndex].innerText;
-    const bText = b.cells[columnIndex].innerText;
+    const aText = a.cells[columnIndex].innerText.replace(/[$,]/g, '');
+    const bText = b.cells[columnIndex].innerText.replace(/[$,]/g, '');
 
     if (isNaN(aText)) {
       return aText.localeCompare(bText) * direction;
@@ -55,13 +64,6 @@ thead.addEventListener('click', (e) => {
       return (Number(aText) - Number(bText)) * direction;
     }
   });
-
-  if (columnIndex === currentColumn) {
-    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-  } else {
-    sortDirection = 'asc';
-    currentColumn = columnIndex;
-  }
 
   tbody.append(...rows);
 });
@@ -111,15 +113,11 @@ button.addEventListener('click', (e) => {
   const salary = form.querySelector('[name="salary"]').value;
   const office = form.querySelector('[name="office"]').value;
 
-  const tr = document.createElement('tr');
+  if (!employeeName || !position || !age || !salary || !office) {
+    pushNotification(10, 10, 'Error!', 'All fields are required', 'error');
 
-  tr.innerHTML = `
-  <td>${employeeName}</td>
-  <td>${position}</td>
-  <td>${office}</td>
-  <td>${age}</td>
-  <td>$${Number(salary).toLocaleString('en-US')}</td>
-  `;
+    return;
+  }
 
   if (employeeName.length < 4) {
     pushNotification(10, 10, 'Error!', 'Name is too short', 'error');
@@ -132,6 +130,16 @@ button.addEventListener('click', (e) => {
 
     return;
   }
+
+  const tr = document.createElement('tr');
+
+  tr.innerHTML = `
+  <td>${employeeName}</td>
+  <td>${position}</td>
+  <td>${office}</td>
+  <td>${age}</td>
+  <td>$${Number(salary).toLocaleString('en-US')}</td>
+  `;
 
   tbody.append(tr);
   form.reset();
@@ -167,8 +175,8 @@ tbody.addEventListener('dblclick', (e) => {
     td.innerText = input.value || originalText;
   });
 
-  input.addEventListener('keydown', () => {
-    if (e.key === 'Enter') {
+  input.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter') {
       td.innerText = input.value || originalText;
     }
   });
